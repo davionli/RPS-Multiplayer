@@ -1,3 +1,27 @@
+body {
+    background-image: url("../images/bg.png");
+    background-size: 100%;
+}
+#tit {
+    color: red;
+    font-size: 80px;
+}
+#info {
+    visibility: hidden;
+}
 .icon{
-    border: 1px solid black;
+    border: 2px solid black;
+    margin-left: 3px;
+}
+.confirm {
+    margin-left: 3px;
+}
+#score-board {
+    font-size: 65px;
+}
+.choose {
+    font-size: 30px;
+}
+#message {
+    background-color: white;
 }

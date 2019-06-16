@@ -16,15 +16,19 @@
   </head>
   <body>
     <header>
-            <span>PRS</span>
+            <h1 class="text-center" id="tit">PRS-Online</h1>
     </header>
     <div class="container">
         
 
 
-        <div class="signIn">
+        <div class="signIn text-center">
             <label for="playerSignIn">Username: </label>
             <input type="text" id="playerSignIn">
+            <br>
+            <label for="avatarLink">Avatar link: </label>
+            <input type="text" id="avatarLink">
+            <br>
             <button class="btn btn-primary" id="submit-username" type="submit">Sign in</button>
         </div>
         <div class="row">
@@ -32,7 +36,20 @@
     
             </div>
             <div class="col-md-4" id="info">
-                
+                <div class="text-center" id="score-board">
+
+                </div>
+                <div class="pk d-flex flex-row justify-content-between">
+                    <div class="choose" id="playerOneDecision">
+
+                    </div>
+                    <div class="choose" id="playerTwoDecision">
+
+                    </div>
+                </div>
+                <div id="message" height="300">
+                    <h2 class="text-center">Chat!</h2>
+                </div>
             </div>
             <div class="col-md-4" id="playerTwo">
                 

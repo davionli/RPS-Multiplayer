@@ -7,6 +7,7 @@ var firebaseConfig = {
     messagingSenderId: "282025357587",
     appId: "1:282025357587:web:0f3c8711116e7da4"
 };
+const rpsRepresent = ["paper", "rock", "scissors"];
 const rpsTable = [[0, 1, -1],
                   [-1, 0, 1],
                   [1, -1, 0]];
@@ -22,11 +23,13 @@ var playerTwoDecisionRef = database.ref("/playerTwo/decision");
 var playerNumber;
 var playerOneUsername;
 var playerTwoUsername;
-var playerOneConfirm;
-var playerTwoConfirm;
+var playerOneConfirm = false;
+var playerTwoConfirm = false;
 var playerOneDecision = null;
 var playerTwoDecision = null;
 var userKey;
+var intervalId;
+var intervalCheck;
 
 function checkOneActivate() {
     playerOneRef.once("value").then(function(snapshot) {
@@ -36,6 +39,7 @@ function checkOneActivate() {
                 if (!ssnapshot.child(oneKey).exists()) {
                     playerActivationRef.child("isPlayerOneActivated").set(false);
                     playerOneRef.remove();
+                    $("#playerOne").empty();
                 }
             })
         }
@@ -50,61 +54,137 @@ function checkTwoActivate() {
                 if (!ssnapshot.child(twoKey).exists()) {
                     playerActivationRef.child("isPlayerTwoActivated").set(false);
                     playerTwoRef.remove();
+                    $("#playerTwo").empty();
                 }
             })
         }
         
     });
 }
-
+// generate player
 function generatePlayer(player) {
-    // paper btn
-    var paperButton = $("<div>");
-    paperButton.attr("id", `paper${player}`);
-    paperButton.attr("data-index", "0");
-    paperButton.attr("class", "icon");
-    paperButton.text("paper");
-    // rock btn
-    var rockButton = $("<div>");
-    rockButton.attr("id", `rock${player}`);
-    rockButton.attr("data-index", "1");
-    rockButton.attr("class", "icon");
-    rockButton.text("rock");
-    // scissors btn
-    var scissorsButton = $("<div>");
-    scissorsButton.attr("id", `scissors${player}`);
-    scissorsButton.attr("data-index", "2");
-    scissorsButton.attr("class", "icon");
-    scissorsButton.text("scissors");
-    // confirm btn
-    var confirmButton = $("<div>");
-    confirmButton.attr("id", `confirm${player}`);
-    confirmButton.text("confirm");
-    $(`#player${player}`).append(paperButton);
-    $(`#player${player}`).append(rockButton);
-    $(`#player${player}`).append(scissorsButton);
-    $(`#player${player}`).append(confirmButton);
-    playerOneConfirm = false;
+    $("#info").css("visibility", "visible");
+    if (player === "One")
+        ref = playerOneRef;
+    else
+        ref = playerTwoRef;
+    ref.once("value").then(function(snapshot) {
+        var url = snapshot.child("avatarUrl").val();
+        var name = snapshot.child("username").val();
+        // player username
+        var playerUsername = $("<h3>");
+        playerUsername.text(name);
+        playerUsername.addClass("text-center");
+        // player image
+        var playerImage = $("<img>");
+        playerImage.attr("src", url);
+        playerImage.attr("width", "300");
+        playerImage.attr("height", "300");
+        // paper btn
+        var paperButton = $("<div>");
+        paperButton.attr("id", `paper${player}`);
+        paperButton.attr("data-index", "0");
+        paperButton.addClass("btn btn-warning icon");
+        paperButton.text("paper");
+        // rock btn
+        var rockButton = $("<div>");
+        rockButton.attr("id", `rock${player}`);
+        rockButton.attr("data-index", "1");
+        rockButton.addClass("btn btn-warning icon");
+        rockButton.text("rock");
+        // scissors btn
+        var scissorsButton = $("<div>");
+        scissorsButton.attr("id", `scissors${player}`);
+        scissorsButton.attr("data-index", "2");
+        scissorsButton.addClass("btn btn-warning icon");
+        scissorsButton.text("scissors");
+        // confirm btn
+        var confirmButton = $("<div>");
+        confirmButton.attr("id", `confirm${player}`);
+        confirmButton.addClass("btn btn-danger confirm");
+        confirmButton.text("Confirm");
+        // chatInput
+        var chatInput = $("<input>");
+        chatInput.attr("type", "text");
+        chatInput.attr("id", `chat${player}`);
+        // chatEnter btn
+        var chatEnter = $("<div>");
+        chatEnter.attr("id", `enter${player}`);
+        chatEnter.addClass("btn btn-info");
+        chatEnter.text("Enter");
+        
+        $(`#player${player}`).append(playerUsername);
+        $(`#player${player}`).append(playerImage);
+        $(`#player${player}`).append(paperButton);
+        $(`#player${player}`).append(rockButton);
+        $(`#player${player}`).append(scissorsButton);
+        $(`#player${player}`).append(confirmButton);
+        $(`#player${player}`).append(chatInput);
+        $(`#player${player}`).append(chatEnter);
+    });
 }
+// generate opponent
+function generateOpponent(player) {
+    if (player === "One")
+        ref = playerOneRef;
+    else
+        ref = playerTwoRef;
+    ref.once("value").then(function(snapshot) {
+        if (snapshot.exists()) {
+            clearInterval(intervalId);
+            var url = snapshot.child("avatarUrl").val();
+            var name = snapshot.child("username").val();
+            // player username
+            var playerUsername = $("<h3>");
+            playerUsername.text(name);
+            playerUsername.addClass("text-center");
+            // player image
+            var playerImage = $("<img>");
+            playerImage.attr("src", url);
+            playerImage.attr("width", "300");
+            playerImage.attr("height", "300");
+            
+            $(`#player${player}`).append(playerUsername);
+            $(`#player${player}`).append(playerImage);
+        }
 
+    });
+}
 
 function judge() {
     var playerOneChoose;
     var playerTwoChoose;
     var playerOneScores;
     var playerTwoScores;
+    var playerOneWins;
+    var playerOneLoses;
+    var playerOneTies;
+    var playerTwoWins;
+    var playerTwoLoses;
+    var playerTwoTies;
     playerOneRef.once("value").then(function(snapshot) {
         playerOneChoose = parseInt(snapshot.child("decision").val()); 
         playerOneScores = parseInt(snapshot.child("score").val());
+        playerOneWins = parseInt(snapshot.child("wins").val());
+        playerOneLoses = parseInt(snapshot.child("loses").val());;
+        playerOneTies = parseInt(snapshot.child("ties").val());;
         playerTwoRef.once("value").then(function(snapshot) {
             playerTwoChoose = parseInt(snapshot.child("decision").val()); 
             playerTwoScores = parseInt(snapshot.child("score").val());
+            playerTwoWins = parseInt(snapshot.child("wins").val());
+            playerTwoLoses = parseInt(snapshot.child("loses").val());;
+            playerTwoTies = parseInt(snapshot.child("ties").val());;
             // update win/lose
             playerOneRef.child("status").set(rpsTable[playerOneChoose][playerTwoChoose]);
             playerTwoRef.child("status").set(rpsTable[playerTwoChoose][playerOneChoose]);
             // update scores
             playerOneRef.child("score").set(playerOneScores + rpsTable[playerOneChoose][playerTwoChoose]);
             playerTwoRef.child("score").set(playerTwoScores + rpsTable[playerTwoChoose][playerOneChoose]);
+            // post score
+            $("#score-board").text(`${playerOneScores + rpsTable[playerOneChoose][playerTwoChoose]} : ${playerTwoScores + rpsTable[playerTwoChoose][playerOneChoose]}`)
+            // post decision
+            $("#playerOneDecision").text(rpsRepresent[playerOneChoose]);
+            $("#playerTwoDecision").text(rpsRepresent[playerTwoChoose]);
             // reset player ready
             playerOneRef.child("ready").set(false);
             playerTwoRef.child("ready").set(false);
@@ -179,7 +259,16 @@ $("#playerTwo").on("click", "#confirmTwo", function() {
     }
 });
 
+database.ref().on("value", function(snapshot) {
+    console.log("has one: ",snapshot.hasChild("playerOne"));
+    console.log("has two: ",snapshot.hasChild("playerTwo"));
 
+    // if (snapshot.hasChild("playerOne"))
+
+    // if (snapshot.hasChild("playerTwo"))
+
+        
+});
 
 
 
@@ -202,7 +291,10 @@ connectedRef.on("value", function(snap) {
 
     }
 });
-
+intervalCheck = setInterval(function() {
+    checkOneActivate();
+    checkTwoActivate();
+}, 1000);
 $("#submit-username").on("click", function() {
     // playerNumber++;
     // check if the two players already exist
@@ -214,33 +306,56 @@ $("#submit-username").on("click", function() {
                 //1. update player one exist tag
                 playerActivationRef.child("isPlayerOneActivated").set(true);
                 //2. save the username 
+                var URL = "assets/images/player1.png";
+                console.log($("#avatarLink").val());
+                if ($("#avatarLink").val() !== "")
+                    URL = $("#avatarLink").val();
                 playerOneRef.set({
                     username: $("#playerSignIn").val(),
+                    avatarUrl: URL,
                     key: userKey,
                     score: 0,
                     status: 0,
-                    ready: false
+                    ready: false,
+                    number: "One",
+                    wins: 0,
+                    loses: 0,
+                    ties: 0
                 })
                 //3. delete sign in box
                 $(".signIn").remove();
                 //4. generate the game for this user
                 generatePlayer("One");
+                intervalId = setInterval(function() {
+                    generateOpponent("Two");
+                }, 1000);
             } else {
                 if (!snapshot.val().isPlayerTwoActivated) {
                     //1. update player one exist tag
                     playerActivationRef.child("isPlayerTwoActivated").set(true);
                     //2. save the username 
+                    var URL = "assets/images/player2.png";
+                    if ($("#avatarLink").val() !== "")
+                        URL = $("#avatarLink").val();
                     playerTwoRef.set({
                         username: $("#playerSignIn").val(),
+                        avatarUrl: URL,
                         key: userKey,
                         score: 0,
                         status: 0,
-                        ready: false
+                        ready: false,
+                        number: "Two",
+                        wins: 0,
+                        loses: 0,
+                        ties: 0
                     })
                     //3. delete sign in box
                     $(".signIn").remove();
                     //4. generate the game for this user
                     generatePlayer("Two");
+                    intervalId = setInterval(function() {
+                        generateOpponent("One");
+                    }, 1000);
                 } 
             }
         } 
