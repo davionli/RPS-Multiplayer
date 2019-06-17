@@ -25,3 +25,9 @@ body {
 #message {
     background-color: white;
 }
+.signIn {
+    background-color: blanchedalmond;
+    margin: auto;
+    padding: 2em;
+    width: 40%;
+}
